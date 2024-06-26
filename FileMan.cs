@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace OpenRpg;
 
@@ -14,7 +14,7 @@ public static class FileMan
         var path = GetSavePath;
         if (!Directory.Exists(path)) Directory.CreateDirectory(path);
         using var sw = File.CreateText($"{path}/{typeof(T).Name}{iterate}.txt");
-        sw.Write(JsonConvert.SerializeObject(t));
+        sw.Write(JsonSerializer.Serialize(t));
         sw.Close();
     }
 
@@ -24,8 +24,19 @@ public static class FileMan
         var filePath = $"{path}/{typeof(T).Name}{iterate}.txt";
         if (!Directory.Exists(path) || !File.Exists(filePath)) return;
         using StreamReader sr = new(filePath);
-        t.Set(JsonConvert.DeserializeObject<T>(sr.ReadToEnd()));
-        sr.Close();
+        try
+        {
+            var result = JsonSerializer.Deserialize<T>(sr.ReadToEnd());
+            t.Set(result);
+        }catch(Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+        finally
+        {
+            sr.Close();
+        }
+
     }
         
     public static bool MakeDir(string dir)
